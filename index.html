@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gerbera with Bee</title>
+    <title>Flower with Bee</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.1.0/anime.min.js"></script>
     <style>
       * {
@@ -50,6 +50,68 @@
         animation-delay: 2s;
       }
 
+      .music-toggle {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        width: 3.5rem;
+        height: 3.5rem;
+        border: none;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e8c15d, #f3d779);
+        box-shadow: 0 10px 22px rgba(194, 139, 33, 0.38);
+        cursor: pointer;
+        z-index: 30;
+        display: grid;
+        place-items: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .music-toggle:hover {
+        transform: scale(1.04);
+        box-shadow: 0 12px 26px rgba(194, 139, 33, 0.46);
+      }
+
+      .music-toggle .icon {
+        width: 0;
+        height: 0;
+        border-top: 0.55rem solid transparent;
+        border-bottom: 0.55rem solid transparent;
+        border-left: 0.9rem solid #fff9ef;
+        margin-left: 0.25rem;
+      }
+
+      .music-toggle.is-playing .icon {
+        width: 0.9rem;
+        height: 1.1rem;
+        border: 0;
+        margin-left: 0;
+        position: relative;
+      }
+
+      .music-toggle.is-playing .icon::before,
+      .music-toggle.is-playing .icon::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        width: 0.28rem;
+        height: 1.1rem;
+        background: #fff9ef;
+        border-radius: 0.2rem;
+      }
+
+      .music-toggle.is-playing .icon::before {
+        left: 0;
+      }
+
+      .music-toggle.is-playing .icon::after {
+        right: 0;
+      }
+
+      audio {
+        display: none;
+      }
+
       @keyframes fade-in {
         to {
           opacity: 1;
@@ -65,6 +127,23 @@
     </style>
   </head>
   <body>
+    <audio
+      id="bgm"
+      src="Olivia Rodrigo - honeybee Lyric Video.mp3"
+      preload="auto"
+      loop
+      playsinline
+    ></audio>
+
+    <button
+      id="musicToggle"
+      class="music-toggle"
+      type="button"
+      aria-label="Play music"
+    >
+      <span class="icon"></span>
+    </button>
+
     <h1 class="text">
       buattt pacaaaaaaallllllll atuuuuuuuuu tersayaaaaaaaaanggggggggg!
     </h1>
@@ -129,7 +208,6 @@
         <circle r="4" fill="hsl(34, 100%, 55%)" />
       </g>
 
-      <!-- still unclear about the path accepted by anime.js -->
       <path
         id="path"
         stroke="none"
@@ -169,6 +247,63 @@
     </svg>
 
     <script>
+      const audio = document.getElementById("bgm");
+      const musicToggle = document.getElementById("musicToggle");
+
+      const updateMusicButton = () => {
+        if (!musicToggle) return;
+        const isPlaying = audio && !audio.paused;
+        musicToggle.classList.toggle("is-playing", isPlaying);
+        musicToggle.setAttribute("aria-label", isPlaying ? "Pause music" : "Play music");
+      };
+
+      const startMusic = async () => {
+        if (!audio) return;
+        audio.volume = 0.45;
+
+        try {
+          await audio.play();
+          updateMusicButton();
+        } catch (error) {
+          console.warn("Audio blocked until user interaction:", error);
+        }
+      };
+
+      const stopMusic = () => {
+        if (!audio) return;
+        audio.pause();
+        updateMusicButton();
+      };
+
+      if (musicToggle) {
+        musicToggle.addEventListener("click", async () => {
+          if (!audio) return;
+
+          if (audio.paused) {
+            await startMusic();
+          } else {
+            stopMusic();
+          }
+        });
+      }
+
+      document.addEventListener("pointerdown", startMusic, { once: true });
+      document.addEventListener("touchstart", startMusic, { once: true });
+
+      if (audio) {
+        audio.addEventListener("play", updateMusicButton);
+        audio.addEventListener("pause", updateMusicButton);
+        audio.addEventListener("error", () => {
+          if (musicToggle) {
+            musicToggle.disabled = true;
+            musicToggle.classList.remove("is-playing");
+            musicToggle.innerHTML = "!";
+          }
+        });
+      }
+
+      updateMusicButton();
+
       const path = anime.path("#path");
 
       const timeline = anime.timeline({
